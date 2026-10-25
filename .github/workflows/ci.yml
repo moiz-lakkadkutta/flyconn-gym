@@ -3,21 +3,23 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 jobs:
-  check:
-    runs-on: ${{ matrix.os }}
+  test:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-24.04, macos-latest]
         python: ["3.12", "3.13"]
-    env:
-      MUJOCO_GL: egl
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-      - run: uv sync --group dev --python ${{ matrix.python }}
-      - run: uv run ruff check
-      - run: uv run ruff format --check
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - run: uv sync --group dev
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
       - run: uv run pyright
-      - run: uv run pytest -q
+      # Physics tests are headless (no rendering), so they need no GL on the runner.
+      - run: uv run pytest -ra
