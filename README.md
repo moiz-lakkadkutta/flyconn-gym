@@ -48,6 +48,18 @@ ep = run_episode(LoomingWalkEnv(max_steps=500), policy)
 print(ep["summary"], ep["provenance"]["coupling_level"])
 ```
 
+## Real-connectome I/O maps (M1)
+
+`flyconn_gym.maps.LOOMING_V1` names the input and readout cell types. `scripts/resolve_maps.py`
+resolves it against cached flyconn stores into `data/iomaps/looming@1/<dataset>.json`
+(MaleCNS, BANC and FlyWire; see `docs/iomaps.md` for counts). The inputs are LPLC2 + LC4 per optic
+lobe. The readouts are DNp09 (forward), MDN (backward; not annotated in flywire@783), DNa02 left/right
+(turn) and DNp01 (giant fibre → *slowing* at Level A, since the walking body can't take off).
+Every citation is marked UNVERIFIED until checked against the paper.
+
+Metrics are pre-registered in `docs/metrics.md` before any run that uses them.
+`scripts/spread.py` runs spread-v1 (drift-corrected turn-away over seeds × sides × variants).
+
 ## What v0 is made of (and its caveats)
 
 - **Brain:** a rate model, `tau dr/dt = -r + tanh⁺(gain · W_signed,in-normalised · r + I)`,
@@ -59,7 +71,9 @@ print(ep["summary"], ep["provenance"]["coupling_level"])
   control every 10 physics steps.
 - **Tonic drive:** the rate model is silent without input, so the decoder adds a constant
   forward drive. `no_brain` is exactly that drive alone.
-- **Controller bias:** even with perfectly symmetric drive, the controller turns by about
-  +13° in 0.8 s. Read any heading differences against `no_brain` and the seed spread.
+- **Controller drift:** with perfectly symmetric drive, the controller still turns, by an amount
+  that depends on the seed (initial CPG phases): mean −1.8°, SD 9.0°, range −13° to +13° over
+  0.8 s and 10 seeds (`docs/results/spread-v1-toy.md`). Read heading differences only against
+  `no_brain` on the same seed.
 
 Licence: Apache-2.0.

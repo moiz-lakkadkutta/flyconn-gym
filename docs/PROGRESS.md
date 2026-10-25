@@ -2,6 +2,47 @@
 
 Running log so a later session can resume. Newest entry first. Scope: `PLAN.md`.
 
+## 2026-10-25: CI green, M1 I/O maps, spread-v1 on the toy (branches ci-green, m1-iomaps)
+
+- **CI (PR #1, ci-green):** run 40176798299 passed on ubuntu-24.04 and macos-latest × py3.12/3.13
+  (17 passed on each). MuJoCo/FlyGym install and run headless on the Linux runner, so the physics
+  tests run there. `FLYCONN_GYM_SKIP_PHYSICS=1` skips them if a runner ever can't.
+- **M1 maps:** `LOOMING_V1` spec (LPLC2+LC4 per lobe → DNp09 forward, MDN backward
+  (optional), DNa02 L/R turn, DNp01 escape) is resolved from cached flyconn stores (neuron
+  tables only) into `data/iomaps/looming@1/{malecns@1.0,banc@888,flywire@783}.json` with
+  store provenance; counts are in `docs/iomaps.md`. Loom-input counts:
+
+  | dataset | loom_left | loom_right |
+  |---|---|---|
+  | malecns@1.0 | 165 | 146 |
+  | banc@888 | 135 | 153 |
+  | flywire@783 | 162 | 152 |
+
+  The DN sets have 1–4 neurons each. flywire@783 has no MDN annotation in any column (MaleCNS's
+  `fafb_783_cell_type` says "MDN"), so `backward` is optional and missing there.
+  manc@1.2.1 can't host looming (no optic lobe). Citations are marked UNVERIFIED (from memory).
+- **spread-v1** (pre-registered in `docs/metrics.md`, committed before the run; 10 seeds ×
+  2 sides × 4 variants, 401 s wall):
+  - controller drift (no_brain) is seed-dependent: mean −1.75°, SD 8.95°, range −13.4 to +12.8°.
+    The "+12.8° drift" in the 2026-10-24 entry was seed 0 only.
+  - Brain effect E_v, drift-corrected turn-away:
+
+    | variant | E_v | 95 % CI |
+    |---|---|---|
+    | real | +1.26° | 0.57 to 1.92 |
+    | rewired | −0.86° | −2.92 to 1.24 |
+    | sign_shuffled | +1.25° | −0.67 to 3.02 |
+
+  - Wiring effect: real − rewired +2.11° (CI −0.03 to 4.39), real − sign_shuffled +0.01°
+    (−1.52 to 1.75). Both are **no evidence**, as pre-registered for an arbitrary toy map.
+- Next:
+  - run the loop on a real-connectome subnetwork: a k-hop subgraph between the loom inputs and the
+    DN readouts, so the rate model stays small (no whole-brain runs on the shared laptop);
+  - check the citations;
+  - a dedicated DN-direction check (does DNa02-left actually turn the body left at Level A
+    through the decoder?);
+  - the LIF stepping API is going into a batched flyconn milestone (owner's call).
+
 ## 2026-10-24: M0 + Level A tracer bullet (branch m0-tracer)
 
 - Scaffold: uv, Python 3.12 (`>=3.12,<3.15`), src layout, Apache-2.0, ruff, pyright strict
