@@ -48,17 +48,26 @@ class DNDecoder:
 
     ``tonic`` is a constant drive that does not come from the connectome (the rate model is
     silent without input); ``no_brain`` runs show what the tonic drive alone produces.
-    FlyGym convention: left drive > right drive turns the fly right.
+    FlyGym convention: left drive > right drive turns the fly right. Optional readouts
+    ``backward`` and ``escape`` lower both drives; a walking body cannot take off, so
+    escape -> slowing is a hand-written Level A choice. Absent readouts count as zero.
     """
 
     tonic: float = 1.0
     forward_gain: float = 0.5
     turn_gain: float = 1.0
+    backward_gain: float = 1.0
+    escape_gain: float = 1.0
     low: float = -1.0
     high: float = 1.5
 
     def __call__(self, readouts: Mapping[str, float]) -> np.ndarray:
-        base = self.tonic + self.forward_gain * readouts["forward"]
+        base = (
+            self.tonic
+            + self.forward_gain * readouts["forward"]
+            - self.backward_gain * readouts.get("backward", 0.0)
+            - self.escape_gain * readouts.get("escape", 0.0)
+        )
         turn = self.turn_gain * (readouts["turn_right"] - readouts["turn_left"])
         return np.clip(np.array([base + turn, base - turn]), self.low, self.high)
 

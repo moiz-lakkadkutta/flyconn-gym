@@ -69,3 +69,13 @@ def test_provenance_labels_level_a(toy_matrix: ConnectivityMatrix) -> None:
     assert prov["dataset"] == "synthetic@0"
     assert prov["iomap"] == {"name": "toy-looming", "version": "0"}
     assert {"flyconn", "flygym", "flyconn-gym"} <= set(prov["packages"])
+
+
+def test_decoder_backward_and_escape_slow_the_fly() -> None:
+    dec = DNDecoder(tonic=1.0)
+    still = {"forward": 0.0, "turn_left": 0.0, "turn_right": 0.0}
+    base = dec(still)
+    assert np.all(dec({**still, "backward": 0.5}) < base)
+    assert np.all(dec({**still, "escape": 0.5}) < base)
+    # Sets a map leaves out (e.g. no MDN in flywire@783) count as zero.
+    assert np.allclose(dec({**still, "backward": 0.0, "escape": 0.0}), base)

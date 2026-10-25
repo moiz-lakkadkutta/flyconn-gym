@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import numpy as np
 import pytest
 from flyconn.graph import ConnectivityMatrix
@@ -34,3 +37,12 @@ def test_index_arrays_match_matrix(toy_matrix: ConnectivityMatrix) -> None:
     idx = io.input_index(toy_matrix)
     for name, ids in io.inputs.items():
         assert np.array_equal(toy_matrix.neuron_ids[idx[name]], np.array(ids))
+
+
+def test_json_round_trip(tmp_path: Path, toy_matrix: ConnectivityMatrix) -> None:
+    io = toy_iomap(toy_matrix)
+    path = tmp_path / "m.json"
+    io.save(path, extra={"store": {"sha": "abc"}})
+    back = IOMap.load(path)
+    assert back == io
+    assert json.loads(path.read_text())["extra"] == {"store": {"sha": "abc"}}
