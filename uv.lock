@@ -397,6 +397,7 @@ dependencies = [
     { name = "flygym" },
     { name = "gymnasium" },
     { name = "numpy" },
+    { name = "pandas" },
     { name = "scipy" },
 ]
 
@@ -407,6 +408,7 @@ dev = [
     { name = "pyright" },
     { name = "pytest" },
     { name = "ruff" },
+    { name = "tabulate" },
 ]
 
 [package.metadata]
@@ -415,6 +417,7 @@ requires-dist = [
     { name = "flygym" },
     { name = "gymnasium", specifier = ">=1.0" },
     { name = "numpy", specifier = ">=1.26" },
+    { name = "pandas", specifier = ">=2.2" },
     { name = "scipy", specifier = ">=1.11" },
 ]
 
@@ -425,6 +428,7 @@ dev = [
     { name = "pyright", specifier = ">=1.1.380" },
     { name = "pytest", specifier = ">=8" },
     { name = "ruff", specifier = ">=0.6" },
+    { name = "tabulate", specifier = ">=0.9" },
 ]
 
 [[package]]
