@@ -6,8 +6,8 @@ hemisphere side as each dataset defines it). For optic-lobe projection neurons i
 optic lobe, so it is the ipsilateral visual field. Neurons without a side never enter a
 sided set.
 
-Every set is a modelling assumption. The citations were written from memory on
-2026-10-25 and are marked UNVERIFIED until they have been checked against the papers.
+Every set is a modelling assumption. Citations were checked against the papers (by DOI) on
+2026-10-26; where a paper supports a set only in part, the citation says so.
 """
 
 from __future__ import annotations
@@ -48,14 +48,17 @@ class MapSpec:
         object.__setattr__(self, "sets", {**self.inputs, **self.readouts})
 
 
-_U = "UNVERIFIED (from memory, 2026-10-25)"
 _LOOM_CITE = (
-    "LPLC2: Klapoetke et al. 2017 Nature (looming selectivity); LC4: von Reyn et al. 2017 "
-    "Nat Neurosci; both feed the giant fibre: Ache et al. 2019 Curr Biol. " + _U
+    "LPLC2 is looming-selective: Klapoetke et al. 2017 Nature, doi:10.1038/nature24626. "
+    "LC4 carries looming expansion velocity to the giant fibre: von Reyn et al. 2017 Neuron, "
+    "doi:10.1016/j.neuron.2017.05.036. Both synapse directly onto the giant fibre: Ache et al. "
+    "2019 Curr Biol, doi:10.1016/j.cub.2019.01.079."
 )
 _TURN_CITE = (
-    "DNa02 activity predicts and drives ipsilateral turning: Rayshubskiy et al. 2020 bioRxiv; "
-    "Yang et al. 2024 Cell (DNa01/DNa02 steering). " + _U
+    "DNa02 is recruited on the side of the upcoming turn and unilateral activation biases "
+    "steering ipsilaterally: Rayshubskiy et al. 2025 eLife, doi:10.7554/eLife.102230; "
+    "unilateral DNa02 stimulation gives an ipsilateral turn: Yang et al. 2024 Cell, "
+    "doi:10.1016/j.cell.2024.08.033."
 )
 
 LOOMING_V1 = MapSpec(
@@ -69,12 +72,15 @@ LOOMING_V1 = MapSpec(
         "forward": NeuronSet(
             ("DNp09",),
             None,
-            "DNp09 (P9) initiates forward walking: Bidaye et al. 2020 Neuron. " + _U,
+            "DNp09 (P9) initiates forward walking, with an ipsilateral turning component (partial "
+            "support: BPN is the straight-walking pathway): Bidaye et al. 2020 Neuron, "
+            "doi:10.1016/j.neuron.2020.07.032.",
         ),
         "backward": NeuronSet(
             ("MDN",),
             None,
-            "MDN (moonwalker) drives backward walking: Bidaye et al. 2014 Science. " + _U,
+            "MDN (moonwalker) activation is sufficient for backward walking: Bidaye et al. 2014 "
+            "Science, doi:10.1126/science.1249964.",
             required=False,
         ),
         "turn_left": NeuronSet(("DNa02",), "left", _TURN_CITE),
@@ -82,9 +88,10 @@ LOOMING_V1 = MapSpec(
         "escape": NeuronSet(
             ("DNp01",),
             None,
-            "DNp01 = giant fibre, drives the escape take-off: von Reyn et al. 2014 Nat Neurosci. "
-            "FlyGym's walking body cannot take off; at Level A the decoder maps it to slowing. "
-            + _U,
+            "DNp01 is the giant fibre: Namiki et al. 2018 eLife, doi:10.7554/eLife.34272; it "
+            "drives the looming escape take-off: von Reyn et al. 2017 Neuron, "
+            "doi:10.1016/j.neuron.2017.05.036. FlyGym's walking body cannot take off; at Level A "
+            "the decoder maps it to slowing (a modelling choice, not from the papers).",
         ),
     },
     notes="v1: one stimulus family (looming), walking-body readouts. Sides are dataset `side`.",

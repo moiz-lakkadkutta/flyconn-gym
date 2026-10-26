@@ -37,3 +37,24 @@ and the fraction of episodes ending in a hit or a flip.
 
 **Expected for the toy connectome:** no evidence. Its I/O map is arbitrary by design, so a
 "win" there would point to a pipeline bug, not biology.
+
+## spread-v1 on real-connectome subgraphs (registered 2026-10-26)
+
+Same metric, design and claim rule as spread-v1 above; only the connectome changes. This
+section fixes every free parameter before the run. Changing any of them after seeing results
+needs a new, separately registered run.
+
+- **Datasets:** malecns@1.0, banc@888, flywire@783, each with its `data/iomaps/looming@1` map.
+- **Brain:** `flyconn_gym.subgraph.load_subgraph(k=3, min_weight=5)`. That is every neuron on
+  an input-to-readout path of at most 3 hops over edges of at least 5 synapses, plus all I/O
+  neurons. Weights are divided by whole-dataset input totals, and the rest of the brain is
+  silent. `RateBrain` defaults (tau 20 ms, dt 1 ms, gain 2), `input_gain` 0.5, `DNDecoder`
+  defaults. The null variants are drawn on the subgraph.
+- **Disclosure:** before writing this section, an open-loop probe (constant input 1.0 to one
+  eye for 300 ms, seed 0) showed that on the real subgraphs the turn readouts (DNa02) reach
+  about 1e-3, the forward readout (DNp09) about 1e-3 and the escape readout (DNp01) 0.01–0.14.
+  The rewired nulls reach about 1e-2 on every readout. The decoder was not tuned after this.
+- **Prediction:** no evidence for a wiring effect on turn-away in any dataset, because the
+  turn readouts are too weak to move the drive. A brain effect, if any, should come mostly
+  through escape → slowing (secondary: path length), not through turning.
+- **Extra secondary (descriptive):** the mean of each DN readout over the episode, per variant.
