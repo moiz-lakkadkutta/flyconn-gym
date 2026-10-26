@@ -38,9 +38,7 @@ class EdgeStore(Protocol):
 
     def neurons(self) -> pd.DataFrame: ...
 
-    def edges(
-        self, *, min_weight: int = 1, pre: Any = None, post: Any = None
-    ) -> pd.DataFrame: ...
+    def edges(self, *, min_weight: int = 1, pre: Any = None, post: Any = None) -> pd.DataFrame: ...
 
 
 def _bfs(fetch: EdgeFetch, start: Iterable[int], hops: int, forward: bool) -> dict[int, int]:
@@ -99,8 +97,9 @@ def load_subgraph(
         totals = TOTAL_COLUMN
     else:
         inbound = store.edges(post=ids.tolist())
-        per_post = inbound.groupby("post")["weight"].sum()
-        neurons[TOTAL_COLUMN] = neurons["neuron_id"].map(per_post).fillna(0).astype(float)
+        per_post = cast("pd.Series", inbound.groupby("post")["weight"].sum())
+        nid = cast("pd.Series", neurons["neuron_id"])
+        neurons[TOTAL_COLUMN] = nid.map(per_post).fillna(0).astype(float)
         totals = "stored edges"
     edges = store.edges(min_weight=min_weight, pre=ids.tolist(), post=ids.tolist())
     prov = {

@@ -41,9 +41,7 @@ class FakeStore:
     def neurons(self) -> pd.DataFrame:
         return self._neurons.copy()
 
-    def edges(
-        self, *, min_weight: int = 1, pre: Any = None, post: Any = None
-    ) -> pd.DataFrame:
+    def edges(self, *, min_weight: int = 1, pre: Any = None, post: Any = None) -> pd.DataFrame:
         e = self._edges[self._edges["weight"] >= min_weight]
         if pre is not None:
             e = e[e["pre"].isin(list(pre))]

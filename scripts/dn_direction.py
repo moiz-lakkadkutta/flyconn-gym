@@ -24,9 +24,7 @@ def main() -> None:
     ap.add_argument("--report", type=Path, default=Path("docs/results/dn-direction.md"))
     args = ap.parse_args()
 
-    conditions = {
-        f"{side}={a}": {side: a} for side in ("turn_left", "turn_right") for a in LEVELS
-    }
+    conditions = {f"{side}={a}": {side: a} for side in ("turn_left", "turn_right") for a in LEVELS}
     t0 = time.perf_counter()
     df = dn_direction(conditions, range(args.seeds), steps=args.steps)
     wall = time.perf_counter() - t0
