@@ -340,13 +340,13 @@
   ]
  },
  "set_citations": {
-  "loom_left": "LPLC2: Klapoetke et al. 2017 Nature (looming selectivity); LC4: von Reyn et al. 2017 Nat Neurosci; both feed the giant fibre: Ache et al. 2019 Curr Biol. UNVERIFIED (from memory, 2026-10-25)",
-  "loom_right": "LPLC2: Klapoetke et al. 2017 Nature (looming selectivity); LC4: von Reyn et al. 2017 Nat Neurosci; both feed the giant fibre: Ache et al. 2019 Curr Biol. UNVERIFIED (from memory, 2026-10-25)",
-  "forward": "DNp09 (P9) initiates forward walking: Bidaye et al. 2020 Neuron. UNVERIFIED (from memory, 2026-10-25)",
-  "backward": "MDN (moonwalker) drives backward walking: Bidaye et al. 2014 Science. UNVERIFIED (from memory, 2026-10-25)",
-  "turn_left": "DNa02 activity predicts and drives ipsilateral turning: Rayshubskiy et al. 2020 bioRxiv; Yang et al. 2024 Cell (DNa01/DNa02 steering). UNVERIFIED (from memory, 2026-10-25)",
-  "turn_right": "DNa02 activity predicts and drives ipsilateral turning: Rayshubskiy et al. 2020 bioRxiv; Yang et al. 2024 Cell (DNa01/DNa02 steering). UNVERIFIED (from memory, 2026-10-25)",
-  "escape": "DNp01 = giant fibre, drives the escape take-off: von Reyn et al. 2014 Nat Neurosci. FlyGym's walking body cannot take off; at Level A the decoder maps it to slowing. UNVERIFIED (from memory, 2026-10-25)"
+  "loom_left": "LPLC2 is looming-selective: Klapoetke et al. 2017 Nature, doi:10.1038/nature24626. LC4 carries looming expansion velocity to the giant fibre: von Reyn et al. 2017 Neuron, doi:10.1016/j.neuron.2017.05.036. Both synapse directly onto the giant fibre: Ache et al. 2019 Curr Biol, doi:10.1016/j.cub.2019.01.079.",
+  "loom_right": "LPLC2 is looming-selective: Klapoetke et al. 2017 Nature, doi:10.1038/nature24626. LC4 carries looming expansion velocity to the giant fibre: von Reyn et al. 2017 Neuron, doi:10.1016/j.neuron.2017.05.036. Both synapse directly onto the giant fibre: Ache et al. 2019 Curr Biol, doi:10.1016/j.cub.2019.01.079.",
+  "forward": "DNp09 (P9) initiates forward walking, with an ipsilateral turning component (partial support: BPN is the straight-walking pathway): Bidaye et al. 2020 Neuron, doi:10.1016/j.neuron.2020.07.032.",
+  "backward": "MDN (moonwalker) activation is sufficient for backward walking: Bidaye et al. 2014 Science, doi:10.1126/science.1249964.",
+  "turn_left": "DNa02 is recruited on the side of the upcoming turn and unilateral activation biases steering ipsilaterally: Rayshubskiy et al. 2025 eLife, doi:10.7554/eLife.102230; unilateral DNa02 stimulation gives an ipsilateral turn: Yang et al. 2024 Cell, doi:10.1016/j.cell.2024.08.033.",
+  "turn_right": "DNa02 is recruited on the side of the upcoming turn and unilateral activation biases steering ipsilaterally: Rayshubskiy et al. 2025 eLife, doi:10.7554/eLife.102230; unilateral DNa02 stimulation gives an ipsilateral turn: Yang et al. 2024 Cell, doi:10.1016/j.cell.2024.08.033.",
+  "escape": "DNp01 is the giant fibre: Namiki et al. 2018 eLife, doi:10.7554/eLife.34272; it drives the looming escape take-off: von Reyn et al. 2017 Neuron, doi:10.1016/j.neuron.2017.05.036. FlyGym's walking body cannot take off; at Level A the decoder maps it to slowing (a modelling choice, not from the papers)."
  },
  "extra": {
   "store": {

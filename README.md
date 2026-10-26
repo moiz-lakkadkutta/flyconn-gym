@@ -6,8 +6,8 @@ An open, controlled brain-body loop. A fly connectome, loaded and simulated with
 has **null wirings** beside it, so you can see which behaviour comes from the wiring and
 which from hand-written controllers.
 
-> **Status: pre-alpha tracer bullet.** The loop runs end to end on a **synthetic toy
-> connectome**. Nothing here is fly biology yet. Real-connectome I/O maps (M1) come next.
+> **Status: pre-alpha.** The loop runs end to end on a synthetic toy connectome and on
+> small subgraphs of MaleCNS, BANC and FlyWire. No result here is a biological finding yet.
 
 ## Two coupling levels, always labelled
 
@@ -55,10 +55,26 @@ resolves it against cached flyconn stores into `data/iomaps/looming@1/<dataset>.
 (MaleCNS, BANC and FlyWire; see `docs/iomaps.md` for counts). The inputs are LPLC2 + LC4 per optic
 lobe. The readouts are DNp09 (forward), MDN (backward; not annotated in flywire@783), DNa02 left/right
 (turn) and DNp01 (giant fibre → *slowing* at Level A, since the walking body can't take off).
-Every citation is marked UNVERIFIED until checked against the paper.
+Citations were checked against the papers by DOI on 2026-10-26 (`docs/iomaps.md`).
 
 Metrics are pre-registered in `docs/metrics.md` before any run that uses them.
 `scripts/spread.py` runs spread-v1 (drift-corrected turn-away over seeds × sides × variants).
+
+## Real-connectome brains (M2)
+
+`flyconn_gym.subgraph.load_subgraph` keeps only the neurons on short paths (≤ 3 hops, ≥ 5
+synapses per edge) from the looming inputs to the DN readouts: 800–2,700 neurons, built in
+under a second, never the whole brain. Weights stay divided by each neuron's whole-dataset
+input, and the rest of the brain is silent.
+
+- `scripts/dn_direction.py`: clamping DNa02-left turns the body left and DNa02-right turns
+  it right, linearly, on every seed (`docs/results/dn-direction.md`). This matches the
+  papers, but at Level A it holds by construction of the decoder.
+- `scripts/open_loop.py`: a constant one-eye loom reaches the giant fibre (DNp01) but barely
+  the steering DNs (about 1e-3) (`docs/results/open-loop-looming.md`).
+- spread-v1 on MaleCNS, BANC and FlyWire subgraphs: no steering effect from the real wiring
+  (`docs/results/spread-v1-real.md`). One nominal "real > rewired" (BANC, +0.27°) does not
+  survive correction for multiple comparisons and tracks controller drift.
 
 ## What v0 is made of (and its caveats)
 

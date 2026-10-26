@@ -2,6 +2,37 @@
 
 Running log so a later session can resume. Newest entry first. Scope: `PLAN.md`.
 
+## 2026-10-26: M2 real-connectome subgraphs, DN direction, verified citations (branch m2-subgraph)
+
+- **Citations** checked by DOI (subagent, web). Fixes: LC4 is von Reyn et al. 2017
+  *Neuron*, not Nat Neurosci; DNa02 now cites Rayshubskiy et al. 2025 eLife (the published
+  version) plus Yang et al. 2024 Cell (which tests DNa02 and DNg13, not DNa01); DNp09 only
+  partly supports "forward" (P9 walking includes ipsilateral turning); the giant fibre cites
+  Namiki 2018 eLife (DNp01) + von Reyn 2017. The resolved maps were regenerated: same
+  neuron ids, new citation text.
+- **Subgraph brains** (`subgraph.py`): k-hop input→readout paths, BFS over the store a
+  frontier at a time. With k=3 and min_weight 5: malecns 2,721 neurons / 100,596 edges,
+  flywire 1,539 / 29,962, banc 803 / 6,308. Under 1 s to build, at most 1.5 GB RSS.
+  Normalisation uses whole-dataset input totals (`input_synapses_total`, or the sum of stored
+  edges for flywire).
+- **DN direction** (`checks.py`, physics test + `scripts/dn_direction.py`, 10 seeds): clamped
+  turn_left=0.1 → +10.0° (SD 1.1), turn_right=0.1 → −10.1° over 0.3 s; linear up to 0.5
+  (±49°). A readout of 0.001 gives about 0.1°. Correct per Yang 2024 / Rayshubskiy 2025
+  (ipsilateral turning).
+- **Open loop** (`scripts/open_loop.py`): real subgraphs drive escape (DNp01) to 0.01–0.14
+  but steering DNs only to about 1e-3; the rewired nulls give about 1e-2 on every readout.
+  This probe ran before the registration and is disclosed there.
+- **spread-v1 on real subgraphs** (registered in `docs/metrics.md` before running; results in
+  `docs/results/spread-v1-real.md`): 5 of 6 wiring comparisons give no evidence. BANC
+  real − rewired = +0.27° (CI 0.02 to 0.51) passes the registered rule but not Bonferroni
+  (99.17 % CI −0.06 to 0.60), and correlates with per-seed drift (r = 0.64). The likely
+  cause is the uneven left/right escape slowing interacting with drift, not steering.
+- Next (each needs owner input or a new registration):
+  - spread-v2: remove the drift × slowing confound and fix the readout scale up front;
+  - larger k or a lower min_weight to see whether more of the steering pathway is reached
+    (memory grows fast past k=3);
+  - LIF stepping API upstream (owner's batched flyconn milestone).
+
 ## 2026-10-25: CI green, M1 I/O maps, spread-v1 on the toy (branches ci-green, m1-iomaps)
 
 - **CI (PR #1, ci-green):** run 40176798299 passed on ubuntu-24.04 and macos-latest × py3.12/3.13
