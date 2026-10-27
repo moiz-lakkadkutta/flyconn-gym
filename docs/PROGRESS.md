@@ -2,6 +2,37 @@
 
 Running log so a later session can resume. Newest entry first. Scope: `PLAN.md`.
 
+## 2026-10-27: spread-v2 (branch m3-spread-v2, stacked on m2-subgraph)
+
+- The owner chose option A (spread-v2 before widening the subgraph). Registered in
+  `docs/metrics.md` before the code and before any run:
+  - **replay baseline:** each episode's own drive is replayed symmetrically on the same seed,
+    so speed is matched and steering is removed;
+  - **fixed readout scale:** open-loop calibration per brain, with one shared scale for
+    turn_left and turn_right; decoder gains 0.25 / 0.5 / 0.5 / 0.5;
+  - **headline:** a Bonferroni 99.17 % interval over m = 6 comparisons.
+- Code: `LevelAPolicy.calibrate`, `rollout.replay_drive` / `symmetric`, `metrics.spread_v2`,
+  `datasets.load_looming`, `scripts/spread_v2.py`. A physics test checks that a replay
+  reproduces its episode exactly; in all runs the replay check is 0.0°.
+- Result (`docs/results/spread-v2.md`, reading in `spread-v2-reading.md`):
+  - malecns real > both nulls (+29.1°, +26.7°);
+  - flywire real > both nulls (+15.4°, +17.2°);
+  - BANC real < rewired (−31.2°: it turns *toward* the loom), and no evidence against
+    sign_shuffled;
+  - toy: no evidence (pipeline check).
+- Exploratory diagnostics:
+  - the effect comes from the scale fix (the raw turn signal is about 1e-3 of saturation),
+    not from the replay;
+  - side labels are consistent (LPLC2/LC4 → giant fibre is 100 % ipsilateral everywhere);
+  - no direct loom → DNa02 synapses;
+  - BANC has low coverage: DNa02 in-subgraph input is 24 % vs 56–70 %, and LPLC2 → GF is 473
+    vs 4,862 synapses in malecns, lopsided.
+- Not claimed: that flies steer away using DNa02 (Level A, silent rest of brain, amplified
+  1e-3 signal).
+- Next (each needs a registration or the owner's go-ahead): robustness of the sign
+  (reference amplitude, held-out seeds); a coverage-matched comparison; option B (wider
+  subgraph) measured with v2.
+
 ## 2026-10-26: M2 real-connectome subgraphs, DN direction, verified citations (branch m2-subgraph)
 
 - **Citations** checked by DOI (subagent, web). Fixes: LC4 is von Reyn et al. 2017
