@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 from flyconn.data.store import Store
 
-from flyconn_gym.brain import BrainVariant
+from flyconn_gym.brain import V2_VARIANTS
 from flyconn_gym.coupling import LevelAPolicy
 from flyconn_gym.iomap import IOMap
 from flyconn_gym.subgraph import load_subgraph
@@ -30,7 +30,7 @@ def main() -> None:
         io = IOMap.load(Path("data/iomaps/looming@1") / f"{ref}.json")
         m = load_subgraph(Store.open(ref), io, k=3, min_weight=5)
         sizes.append(f"- {ref}: {m.n} neurons, {m.weights.nnz} edges")
-        for variant in (v for v in BrainVariant if v is not BrainVariant.NO_BRAIN):
+        for variant in V2_VARIANTS[:3]:
             for side, feat in (("left", [LOOM, 0.0]), ("right", [0.0, LOOM])):
                 policy = LevelAPolicy.build(m, io, variant, seed=0)
                 policy.reset()

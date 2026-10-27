@@ -17,7 +17,7 @@ from typing import Any, cast
 
 import pandas as pd
 
-from flyconn_gym.brain import BrainVariant
+from flyconn_gym.brain import V2_VARIANTS
 from flyconn_gym.coupling import COUPLING_LEVEL, LevelAPolicy
 from flyconn_gym.datasets import SUBGRAPH_K, SUBGRAPH_MIN_WEIGHT, load_looming
 from flyconn_gym.env import LoomingWalkEnv
@@ -43,7 +43,7 @@ def main() -> None:
     for side in ("left", "right"):
         env = LoomingWalkEnv(max_steps=args.steps, loom_side=side)
         for seed in range(args.seeds):
-            for variant in BrainVariant:
+            for variant in V2_VARIANTS:
                 policy = LevelAPolicy.build(m, io, variant, seed=seed)
                 ep = run_episode(env, policy, seed=seed)
                 s = ep["summary"]

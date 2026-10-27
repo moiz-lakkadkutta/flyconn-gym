@@ -72,6 +72,23 @@ def khop_ids(
     return np.array(sorted(keep | set(sources) | set(targets)), dtype=np.int64)
 
 
+def readout_coverage(
+    m: ConnectivityMatrix,
+    io: IOMap,
+    sets: tuple[str, ...] = ("turn_left", "turn_right", "escape"),
+) -> float:
+    """Mean over the neurons in ``sets`` of simulated input synapses / whole-dataset input.
+
+    Simulated = from subgraph neurons on the matrix's edges (already ``>= min_weight``);
+    the denominator is the ``input_synapses_total`` used for normalisation (spread-v3).
+    """
+    ids = sorted({i for k in sets if k in io.readouts for i in io.readouts[k]})
+    idx = m.index_of(np.array(ids))
+    inside = np.asarray(m.weights[:, idx].sum(axis=0)).ravel()
+    total = cast("pd.Series", m.meta[TOTAL_COLUMN]).to_numpy(dtype=float)[idx]
+    return float(np.mean(inside / total))
+
+
 def _io_ids(io: IOMap) -> tuple[list[int], list[int]]:
     src = sorted({i for ids in io.inputs.values() for i in ids})
     tgt = sorted({i for ids in io.readouts.values() for i in ids})

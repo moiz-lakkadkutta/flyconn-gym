@@ -15,6 +15,7 @@ def run_episode(env: LoomingWalkEnv, policy: LevelAPolicy, seed: int = 0) -> dic
     policy.reset()
     h0 = float(np.arctan2(info["heading"][1], info["heading"][0]))
     xy, drive, dn, dist = [info["fly_xy"]], [], [], [info["loom_distance"]]
+    dn_raw: list[list[float]] = []
     terminated = truncated = False
     while not (terminated or truncated):
         action = policy.act(obs[:2])
@@ -22,6 +23,7 @@ def run_episode(env: LoomingWalkEnv, policy: LevelAPolicy, seed: int = 0) -> dic
         xy.append(info["fly_xy"])
         drive.append(action)
         dn.append([policy.last_readouts[k] for k in sorted(policy.last_readouts)])
+        dn_raw.append([policy.last_raw_readouts[k] for k in sorted(policy.last_readouts)])
         dist.append(info["loom_distance"])
     h1 = float(np.arctan2(info["heading"][1], info["heading"][0]))
     return {
@@ -30,6 +32,7 @@ def run_episode(env: LoomingWalkEnv, policy: LevelAPolicy, seed: int = 0) -> dic
         "drive": np.array(drive),
         "dn_names": sorted(policy.last_readouts),
         "dn": np.array(dn),
+        "dn_raw": np.array(dn_raw),
         "loom_distance": np.array(dist),
         "summary": {
             "steps": len(drive),

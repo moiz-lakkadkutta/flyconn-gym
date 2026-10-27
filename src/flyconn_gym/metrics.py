@@ -12,7 +12,7 @@ from typing import Any, Literal, cast
 import numpy as np
 import pandas as pd
 
-NULLS = ("rewired", "sign_shuffled")
+NULLS = ("rewired", "sign_shuffled", "lat_rewired")
 WIRED = ("real", *NULLS)
 
 
@@ -33,8 +33,8 @@ def bootstrap_ci(
     return float(np.quantile(means, a)), float(np.quantile(means, 1 - a))
 
 
-def _summary(x: np.ndarray) -> dict[str, float]:
-    lo, hi = bootstrap_ci(x)
+def _summary(x: np.ndarray, n_boot: int = 10_000) -> dict[str, float]:
+    lo, hi = bootstrap_ci(x, n_boot=n_boot)
     return {
         "n": len(x),
         "mean": float(x.mean()),
@@ -77,17 +77,18 @@ def spread_v1(episodes: pd.DataFrame) -> dict[str, pd.DataFrame]:
 REPLAY_TOLERANCE_DEG = 1e-6
 
 
-def _summary_v2(x: np.ndarray, bonf_level: float) -> dict[str, float]:
-    lo, hi = bootstrap_ci(x, level=bonf_level)
-    return {**_summary(x), "bonf_lo": lo, "bonf_hi": hi}
+def _summary_v2(x: np.ndarray, bonf_level: float, n_boot: int) -> dict[str, float]:
+    lo, hi = bootstrap_ci(x, n_boot=n_boot, level=bonf_level)
+    return {**_summary(x, n_boot), "bonf_lo": lo, "bonf_hi": hi}
 
 
-def spread_v2(episodes: pd.DataFrame, n_comparisons: int) -> dict[str, Any]:
+def spread_v2(episodes: pd.DataFrame, n_comparisons: int, n_boot: int = 10_000) -> dict[str, Any]:
     """Compute spread-v2 from rows ``variant, seed, side, dheading_deg, dheading_replay_deg``.
 
     ``Δθ = θ_away(episode) - θ_away(replay)``; ``E_v(s)`` is its mean over sides. Verdicts use
     the Bonferroni interval at level ``1 - 0.05 / n_comparisons``; the 95 % CI is descriptive.
     ``replay_check`` reports whether no_brain episodes match their replays (they must).
+    spread-v3 uses the same computation with ``n_boot=100_000`` and its own ``m``.
     """
     bonf_level = 1 - 0.05 / n_comparisons
     df = episodes.copy()
@@ -104,13 +105,16 @@ def spread_v2(episodes: pd.DataFrame, n_comparisons: int) -> dict[str, Any]:
         pd.DataFrame({v: wide[v] for v in WIRED if v in wide}).groupby(level="seed").mean(),
     )
     brain = pd.DataFrame(
-        [{"variant": v, **_summary_v2(per_seed[v].to_numpy(), bonf_level)} for v in per_seed]
+        [
+            {"variant": v, **_summary_v2(per_seed[v].to_numpy(), bonf_level, n_boot)}
+            for v in per_seed
+        ]
     )
     rows: list[dict[str, object]] = []
     for null in NULLS:
         if null not in per_seed or "real" not in per_seed:
             continue
-        s = _summary_v2((per_seed["real"] - per_seed[null]).to_numpy(), bonf_level)
+        s = _summary_v2((per_seed["real"] - per_seed[null]).to_numpy(), bonf_level, n_boot)
         verdict = (
             "real > null"
             if s["bonf_lo"] > 0
