@@ -75,6 +75,12 @@ input, and the rest of the brain is silent.
 - spread-v1 on MaleCNS, BANC and FlyWire subgraphs: no steering effect from the real wiring
   (`docs/results/spread-v1-real.md`). One nominal "real > rewired" (BANC, +0.27°) does not
   survive correction for multiple comparisons and tracks controller drift.
+- spread-v2 (`docs/results/spread-v2-reading.md`): it compares each episode with a
+  symmetric replay of its own drive and calibrates the readout scale up front. Under v2,
+  real MaleCNS and FlyWire subgraphs steer away from the loom more than both nulls do
+  (Bonferroni intervals), and BANC steers toward it. The effect rests on normalising a raw
+  turn signal of about 1e-3, and BANC's subgraph covers much less of DNa02's input. Read the
+  caveats before quoting any of it.
 
 ## What v0 is made of (and its caveats)
 

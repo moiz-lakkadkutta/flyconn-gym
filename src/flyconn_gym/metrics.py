@@ -1,8 +1,13 @@
-"""Pre-registered metrics (``docs/metrics.md``). spread-v1: drift-corrected looming turn-away."""
+"""Pre-registered metrics (``docs/metrics.md``).
+
+spread-v1: looming turn-away, drift-corrected against no_brain.
+spread-v2: looming turn-away against a symmetric replay of each episode's own drive, with a
+Bonferroni headline interval.
+"""
 
 from __future__ import annotations
 
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -67,3 +72,60 @@ def spread_v1(episodes: pd.DataFrame) -> dict[str, pd.DataFrame]:
         )
         rows.append({"null": null, **s, "verdict": verdict})
     return {"per_seed": per_seed, "brain_effect": brain, "wiring_effect": pd.DataFrame(rows)}
+
+
+REPLAY_TOLERANCE_DEG = 1e-6
+
+
+def _summary_v2(x: np.ndarray, bonf_level: float) -> dict[str, float]:
+    lo, hi = bootstrap_ci(x, level=bonf_level)
+    return {**_summary(x), "bonf_lo": lo, "bonf_hi": hi}
+
+
+def spread_v2(episodes: pd.DataFrame, n_comparisons: int) -> dict[str, Any]:
+    """Compute spread-v2 from rows ``variant, seed, side, dheading_deg, dheading_replay_deg``.
+
+    ``Δθ = θ_away(episode) - θ_away(replay)``; ``E_v(s)`` is its mean over sides. Verdicts use
+    the Bonferroni interval at level ``1 - 0.05 / n_comparisons``; the 95 % CI is descriptive.
+    ``replay_check`` reports whether no_brain episodes match their replays (they must).
+    """
+    bonf_level = 1 - 0.05 / n_comparisons
+    df = episodes.copy()
+    away = [turn_away_deg(h, s) for h, s in zip(df["dheading_deg"], df["side"], strict=True)]
+    away_rep = [
+        turn_away_deg(h, s) for h, s in zip(df["dheading_replay_deg"], df["side"], strict=True)
+    ]
+    df["delta"] = np.array(away) - np.array(away_rep)
+    nb = cast("pd.Series", df.loc[df["variant"] == "no_brain", "delta"])
+    max_nb = float(nb.abs().max()) if len(nb) else float("nan")
+    wide = df.pivot_table(index=["seed", "side"], columns="variant", values="delta")
+    per_seed = cast(
+        "pd.DataFrame",
+        pd.DataFrame({v: wide[v] for v in WIRED if v in wide}).groupby(level="seed").mean(),
+    )
+    brain = pd.DataFrame(
+        [{"variant": v, **_summary_v2(per_seed[v].to_numpy(), bonf_level)} for v in per_seed]
+    )
+    rows: list[dict[str, object]] = []
+    for null in NULLS:
+        if null not in per_seed or "real" not in per_seed:
+            continue
+        s = _summary_v2((per_seed["real"] - per_seed[null]).to_numpy(), bonf_level)
+        verdict = (
+            "real > null"
+            if s["bonf_lo"] > 0
+            else "real < null"
+            if s["bonf_hi"] < 0
+            else "no evidence"
+        )
+        rows.append({"null": null, **s, "verdict": verdict})
+    return {
+        "per_seed": per_seed,
+        "brain_effect": brain,
+        "wiring_effect": pd.DataFrame(rows),
+        "bonf_level": bonf_level,
+        "replay_check": {
+            "max_abs_no_brain_deg": max_nb,
+            "valid": bool(max_nb < REPLAY_TOLERANCE_DEG),
+        },
+    }
