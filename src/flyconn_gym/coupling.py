@@ -19,6 +19,16 @@ from flyconn_gym.iomap import IOMap
 
 COUPLING_LEVEL = "A: brain -> DN command -> FlyGym hybrid turning controller"
 
+# Readouts that share one calibration scale (spread-v2, docs/metrics.md). The two turn sets
+# share a scale so that their left/right asymmetry survives normalisation.
+SCALE_GROUPS: dict[str, tuple[str, ...]] = {
+    "turn": ("turn_left", "turn_right"),
+    "forward": ("forward",),
+    "backward": ("backward",),
+    "escape": ("escape",),
+}
+UNREACHABLE = 1e-9
+
 
 def looming_features(
     fly_xy: np.ndarray,
@@ -93,6 +103,8 @@ class LevelAPolicy:
     input_names: tuple[str, ...] = ("loom_left", "loom_right")
     input_gain: float = 0.5
     decoder: DNDecoder = field(default_factory=DNDecoder)
+    readout_scale: dict[str, float] | None = None
+    scale_groups: dict[str, float] = field(default_factory=dict[str, float])
     last_readouts: dict[str, float] = field(default_factory=dict[str, float])
     _in_idx: dict[str, np.ndarray] = field(default_factory=dict[str, np.ndarray])
     _out_idx: dict[str, np.ndarray] = field(default_factory=dict[str, np.ndarray])
@@ -120,16 +132,57 @@ class LevelAPolicy:
             self.brain.reset()
         self.last_readouts = {k: 0.0 for k in self.iomap.readouts}
 
+    def _raw_readouts(self, features: np.ndarray) -> dict[str, float]:
+        if self.brain is None:
+            return {k: 0.0 for k in self.iomap.readouts}
+        external = np.zeros(self.brain.n)
+        for name, value in zip(self.input_names, features, strict=True):
+            external[self._in_idx[name]] += self.input_gain * float(value)
+        rates = self.brain.step(external)
+        return {k: float(rates[i].mean()) for k, i in self._out_idx.items()}
+
+    def calibrate(self, reference: float = 1.0, steps: int = 300) -> dict[str, float]:
+        """Set :attr:`readout_scale` from open-loop responses to a reference stimulus.
+
+        Each input set in turn gets ``reference`` alone for ``steps`` brain steps (from rest).
+        A group's scale is the largest steady readout of any of its sets over those stimuli;
+        afterwards each readout is divided by its group's scale and clipped to [0, 1]. A scale
+        below :data:`UNREACHABLE` marks the group unreachable (its readouts read 0). Returns
+        the group scales and leaves the brain reset.
+        """
+        peak = {k: 0.0 for k in self.iomap.readouts}
+        for i in range(len(self.input_names)):
+            features = np.zeros(len(self.input_names))
+            features[i] = reference
+            self.reset()
+            raw: dict[str, float] = {}
+            for _ in range(steps):
+                raw = self._raw_readouts(features)
+            peak = {k: max(peak[k], raw.get(k, 0.0)) for k in peak}
+        self.reset()
+        self.scale_groups = {}
+        scale: dict[str, float] = {}
+        for g, names in SCALE_GROUPS.items():
+            present = [k for k in names if k in peak]
+            if not present:
+                continue
+            s = max(peak[k] for k in present)
+            self.scale_groups[g] = s if s >= UNREACHABLE else 0.0
+            scale.update(dict.fromkeys(present, self.scale_groups[g]))
+        self.readout_scale = scale
+        return dict(self.scale_groups)
+
     def act(self, features: np.ndarray) -> np.ndarray:
         """One brain step on sensory ``features`` (ordered as ``input_names``) -> drive (2,)."""
-        if self.brain is not None:
-            external = np.zeros(self.brain.n)
-            for name, value in zip(self.input_names, features, strict=True):
-                external[self._in_idx[name]] += self.input_gain * float(value)
-            rates = self.brain.step(external)
-            self.last_readouts = {k: float(rates[i].mean()) for k, i in self._out_idx.items()}
+        raw = self._raw_readouts(features)
+        if self.readout_scale is None:
+            self.last_readouts = raw
         else:
-            self.last_readouts = {k: 0.0 for k in self.iomap.readouts}
+            sc = self.readout_scale
+            self.last_readouts = {
+                k: min(max(v / sc[k], 0.0), 1.0) if sc.get(k, 0.0) > 0 else 0.0
+                for k, v in raw.items()
+            }
         return self.decoder(self.last_readouts)
 
     def provenance(self) -> dict[str, Any]:
@@ -150,6 +203,9 @@ class LevelAPolicy:
                 "matrix_provenance": brain.matrix.provenance,
             },
             "decoder": vars(self.decoder),
+            "readout_scale": None
+            if self.readout_scale is None
+            else {"groups": self.scale_groups, "unreachable_below": UNREACHABLE},
             "input_gain": self.input_gain,
             "packages": _versions(),
         }

@@ -16,32 +16,13 @@ from pathlib import Path
 from typing import Any, cast
 
 import pandas as pd
-from flyconn.graph import ConnectivityMatrix
 
 from flyconn_gym.brain import BrainVariant
 from flyconn_gym.coupling import COUPLING_LEVEL, LevelAPolicy
+from flyconn_gym.datasets import SUBGRAPH_K, SUBGRAPH_MIN_WEIGHT, load_looming
 from flyconn_gym.env import LoomingWalkEnv
-from flyconn_gym.iomap import IOMap
 from flyconn_gym.metrics import spread_v1
 from flyconn_gym.rollout import run_episode
-from flyconn_gym.toy import toy_connectome, toy_iomap
-
-# Registered in docs/metrics.md ("spread-v1 on real-connectome subgraphs"); do not change.
-SUBGRAPH_K = 3
-SUBGRAPH_MIN_WEIGHT = 5
-
-
-def load(dataset: str) -> tuple[ConnectivityMatrix, IOMap]:
-    if dataset == "toy":
-        m = toy_connectome()
-        return m, toy_iomap(m)
-    from flyconn.data.store import Store
-
-    from flyconn_gym.subgraph import load_subgraph
-
-    io = IOMap.load(Path("data/iomaps/looming@1") / f"{dataset}.json")
-    m = load_subgraph(Store.open(dataset), io, k=SUBGRAPH_K, min_weight=SUBGRAPH_MIN_WEIGHT)
-    return m, io
 
 
 def main() -> None:
@@ -54,7 +35,7 @@ def main() -> None:
     report = Path(f"docs/results/spread-v1-{args.dataset}.md")
     out.mkdir(parents=True, exist_ok=True)
 
-    m, io = load(args.dataset)
+    m, io = load_looming(args.dataset)
     print(f"{args.dataset}: {m.n} neurons, {m.weights.nnz} edges", flush=True)
     rows: list[dict[str, Any]] = []
     prov: dict[str, Any] = {}

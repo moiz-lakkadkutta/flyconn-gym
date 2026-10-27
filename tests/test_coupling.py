@@ -79,3 +79,38 @@ def test_decoder_backward_and_escape_slow_the_fly() -> None:
     assert np.all(dec({**still, "escape": 0.5}) < base)
     # Sets a map leaves out (e.g. no MDN in flywire@783) count as zero.
     assert np.allclose(dec({**still, "backward": 0.0, "escape": 0.0}), base)
+
+
+def test_calibrated_readouts_are_normalised_with_a_shared_turn_scale(
+    toy_matrix: ConnectivityMatrix,
+) -> None:
+    policy = LevelAPolicy.build(toy_matrix, toy_iomap(toy_matrix), BrainVariant.REAL, seed=0)
+    groups = policy.calibrate(reference=1.0, steps=300)
+    assert policy.brain is not None and not policy.brain.rates.any(), "calibration resets"
+    scale = policy.readout_scale
+    assert scale is not None and scale["turn_left"] == scale["turn_right"] == groups["turn"]
+    policy.reset()
+    for _ in range(300):
+        policy.act(np.array([1.0, 0.0]))
+    vals = np.array(list(policy.last_readouts.values()))
+    assert np.all((vals >= 0) & (vals <= 1))
+    # At the reference stimulus, the strongest set in each reachable group reads ~1.
+    assert max(policy.last_readouts["turn_left"], policy.last_readouts["turn_right"]) <= 1.0
+
+
+def test_unreachable_group_reads_zero(toy_matrix: ConnectivityMatrix) -> None:
+    policy = LevelAPolicy.build(toy_matrix, toy_iomap(toy_matrix), BrainVariant.REAL, seed=0)
+    policy.calibrate()
+    assert policy.readout_scale is not None
+    policy.readout_scale = {**policy.readout_scale, "forward": 0.0}
+    policy.reset()
+    for _ in range(50):
+        policy.act(np.array([2.0, 2.0]))
+    assert policy.last_readouts["forward"] == 0.0
+
+
+def test_no_brain_calibrates_to_unreachable(toy_matrix: ConnectivityMatrix) -> None:
+    policy = LevelAPolicy.build(toy_matrix, toy_iomap(toy_matrix), BrainVariant.NO_BRAIN, seed=0)
+    assert set(policy.calibrate().values()) == {0.0}
+    policy.reset()
+    assert np.allclose(policy.act(np.array([1.0, 1.0])), [1.0, 1.0])

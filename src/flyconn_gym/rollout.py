@@ -41,3 +41,35 @@ def run_episode(env: LoomingWalkEnv, policy: LevelAPolicy, seed: int = 0) -> dic
             "path_length_mm": float(np.sum(np.linalg.norm(np.diff(np.array(xy), axis=0), axis=1))),
         },
     }
+
+
+def replay_drive(env: LoomingWalkEnv, drive: np.ndarray, seed: int) -> dict[str, Any]:
+    """Re-run ``drive`` (shape ``(steps, 2)``) open-loop on ``seed``; same summary keys.
+
+    Physics is deterministic for a seed, so replaying an episode's own drive reproduces it.
+    The replay stops early if the episode terminates (a hit or a flip).
+    """
+    _, info = env.reset(seed=seed)
+    h0 = float(np.arctan2(info["heading"][1], info["heading"][0]))
+    xy = [info["fly_xy"]]
+    steps = 0
+    for action in drive:
+        _, _, terminated, truncated, info = env.step(np.asarray(action))
+        xy.append(info["fly_xy"])
+        steps += 1
+        if terminated or truncated:
+            break
+    h1 = float(np.arctan2(info["heading"][1], info["heading"][0]))
+    return {
+        "steps": steps,
+        "hit": info.get("hit", False),
+        "flipped": info.get("flipped", False),
+        "final_heading_deg": float(np.degrees(h1 - h0)),
+        "path_length_mm": float(np.sum(np.linalg.norm(np.diff(np.array(xy), axis=0), axis=1))),
+    }
+
+
+def symmetric(drive: np.ndarray) -> np.ndarray:
+    """Each step's mean of (left, right) on both sides: same speed, no steering."""
+    mean = np.asarray(drive).mean(axis=1, keepdims=True)
+    return np.repeat(mean, 2, axis=1)
