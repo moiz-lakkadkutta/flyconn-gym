@@ -15,7 +15,7 @@ import imageio.v3 as iio
 import numpy as np
 from PIL import Image, ImageDraw
 
-from flyconn_gym.brain import BrainVariant
+from flyconn_gym.brain import V2_VARIANTS
 from flyconn_gym.coupling import LevelAPolicy
 from flyconn_gym.env import LoomingWalkEnv
 from flyconn_gym.rollout import run_episode
@@ -42,7 +42,7 @@ def main() -> None:
     m = toy_connectome()
     io = toy_iomap(m)
     columns, record = [], {}
-    for variant in BrainVariant:
+    for variant in V2_VARIANTS:
         env = LoomingWalkEnv(max_steps=args.steps, loom_side="left", render_mode="rgb_array")
         policy = LevelAPolicy.build(m, io, variant, seed=args.seed)
         t0 = time.perf_counter()

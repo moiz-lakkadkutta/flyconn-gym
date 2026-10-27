@@ -94,3 +94,11 @@ def test_load_subgraph_normalises_by_whole_dataset_input(totals: bool) -> None:
     sub = m.provenance["subgraph"]
     assert sub["k"] == 3 and sub["min_weight"] == 5
     assert sub["totals"] == ("input_synapses_total" if totals else "stored edges")
+
+
+def test_readout_coverage_is_inside_input_over_total() -> None:
+    from flyconn_gym.subgraph import readout_coverage
+
+    m = load_subgraph(FakeStore(EDGES, totals=True), _io(), k=3, min_weight=5)  # type: ignore[arg-type]
+    # Readout t (id 2) gets 5 synapses from b inside the subgraph; its total is 100.
+    assert readout_coverage(m, _io(), sets=("turn_left",)) == pytest.approx(5 / 100)

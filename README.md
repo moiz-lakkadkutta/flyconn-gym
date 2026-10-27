@@ -81,6 +81,11 @@ input, and the rest of the brain is silent.
   (Bonferroni intervals), and BANC steers toward it. The effect rests on normalising a raw
   turn signal of about 1e-3, and BANC's subgraph covers much less of DNa02's input. Read the
   caveats before quoting any of it.
+- spread-v3 (`docs/results/spread-v3-reading.md`) tests v2's robustness. v2 replicates on
+  held-out seeds, but only under per-brain scaling. With one shared scale, the real brains
+  steer by less than 1°, and only one of the five v2 claims survives (malecns
+  real > sign_shuffled, +0.54°). At BANC-level readout coverage, MaleCNS and FlyWire turn
+  toward the loom as BANC does. All of this is Level A.
 
 ## What v0 is made of (and its caveats)
 

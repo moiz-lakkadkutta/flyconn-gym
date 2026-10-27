@@ -2,6 +2,29 @@
 
 Running log so a later session can resume. Newest entry first. Scope: `PLAN.md`.
 
+## 2026-10-27: spread-v3 robustness (branch m4-spread-v3, stacked on m3-spread-v2)
+
+- The owner approved four checks. They were registered in `docs/metrics.md` and committed
+  before any code that produces numbers:
+  - held-out seeds 10–29;
+  - a shared turn scale (B);
+  - a laterality-preserving null `lat_rewired` (`nulls.lateral_rewire`, logged in
+    `upstream-notes.md`);
+  - readout-coverage matching by min_weight (malecns 25, flywire 15, BANC 5, chosen before
+    any episode).
+- m = 30, Bonferroni 99.833 %, 100k resamples. 10 runs, 41–78 min each, 4 in parallel. All
+  replay checks were exact, and all lat draws were fully shuffled.
+- Result (`docs/results/spread-v3.md`, reading in `spread-v3-reading.md`):
+  - All five v2 claims replicate on held-out seeds under per-brain scaling (A).
+  - Under a shared scale (B), the real brains steer < 1°. Only malecns real > sign_shuffled
+    survives (+0.54°). The other four are normalisation-dependent.
+  - Real > lat_rewired everywhere. This is carried by lat_rewired turning hard toward the
+    loom (−47° to −68°), not by the real brains turning away.
+  - At BANC-level coverage, malecns (−5.4°) and flywire (−29.8°) turn toward, like BANC
+    (−31.9°). Coverage can explain BANC's sign. The v2 sign depends on the edge threshold.
+- Next (needs the owner): option B (wider subgraph); a second coverage-matching method; a
+  scale-free readout.
+
 ## 2026-10-27: spread-v2 (branch m3-spread-v2, stacked on m2-subgraph)
 
 - The owner chose option A (spread-v2 before widening the subgraph). Registered in

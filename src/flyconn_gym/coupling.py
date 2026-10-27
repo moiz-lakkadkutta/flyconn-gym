@@ -106,6 +106,7 @@ class LevelAPolicy:
     readout_scale: dict[str, float] | None = None
     scale_groups: dict[str, float] = field(default_factory=dict[str, float])
     last_readouts: dict[str, float] = field(default_factory=dict[str, float])
+    last_raw_readouts: dict[str, float] = field(default_factory=dict[str, float])
     _in_idx: dict[str, np.ndarray] = field(default_factory=dict[str, np.ndarray])
     _out_idx: dict[str, np.ndarray] = field(default_factory=dict[str, np.ndarray])
 
@@ -160,21 +161,28 @@ class LevelAPolicy:
                 raw = self._raw_readouts(features)
             peak = {k: max(peak[k], raw.get(k, 0.0)) for k in peak}
         self.reset()
-        self.scale_groups = {}
-        scale: dict[str, float] = {}
+        groups: dict[str, float] = {}
         for g, names in SCALE_GROUPS.items():
             present = [k for k in names if k in peak]
-            if not present:
-                continue
-            s = max(peak[k] for k in present)
-            self.scale_groups[g] = s if s >= UNREACHABLE else 0.0
-            scale.update(dict.fromkeys(present, self.scale_groups[g]))
-        self.readout_scale = scale
+            if present:
+                groups[g] = max(peak[k] for k in present)
+        self.use_scale(groups)
         return dict(self.scale_groups)
+
+    def use_scale(self, groups: Mapping[str, float]) -> None:
+        """Normalise readouts by the given group scales (e.g. one shared by several brains)."""
+        self.scale_groups = {g: (s if s >= UNREACHABLE else 0.0) for g, s in groups.items()}
+        scale: dict[str, float] = {}
+        for g, names in SCALE_GROUPS.items():
+            for k in names:
+                if k in self.iomap.readouts:
+                    scale[k] = self.scale_groups.get(g, 0.0)
+        self.readout_scale = scale
 
     def act(self, features: np.ndarray) -> np.ndarray:
         """One brain step on sensory ``features`` (ordered as ``input_names``) -> drive (2,)."""
         raw = self._raw_readouts(features)
+        self.last_raw_readouts = raw
         if self.readout_scale is None:
             self.last_readouts = raw
         else:

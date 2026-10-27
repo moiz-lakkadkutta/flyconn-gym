@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 from flyconn.graph import ConnectivityMatrix
 
 from flyconn_gym.brain import BrainVariant
@@ -47,7 +48,7 @@ def test_variants_produce_different_dn_outputs(toy_matrix: ConnectivityMatrix) -
     traces = {v: _dn_trace(toy_matrix, v) for v in BrainVariant}
     real = traces[BrainVariant.REAL]
     assert real.max() > 0, "the stimulus must reach the DN readouts in the toy graph"
-    for v in (BrainVariant.REWIRED, BrainVariant.SIGN_SHUFFLED):
+    for v in (BrainVariant.REWIRED, BrainVariant.SIGN_SHUFFLED, BrainVariant.LAT_REWIRED):
         assert not np.allclose(real, traces[v]), v
     assert np.all(traces[BrainVariant.NO_BRAIN] == 0)
 
@@ -114,3 +115,15 @@ def test_no_brain_calibrates_to_unreachable(toy_matrix: ConnectivityMatrix) -> N
     assert set(policy.calibrate().values()) == {0.0}
     policy.reset()
     assert np.allclose(policy.act(np.array([1.0, 1.0])), [1.0, 1.0])
+
+
+def test_shared_scale_and_raw_readouts(toy_matrix: ConnectivityMatrix) -> None:
+    policy = LevelAPolicy.build(toy_matrix, toy_iomap(toy_matrix), BrainVariant.REAL, seed=0)
+    own = policy.calibrate()
+    policy.use_scale({g: 10 * s for g, s in own.items()})
+    policy.reset()
+    for _ in range(300):
+        policy.act(np.array([1.0, 0.0]))
+    raw, norm = policy.last_raw_readouts, policy.last_readouts
+    for k in raw:
+        assert norm[k] == pytest.approx(min(raw[k] / policy.readout_scale[k], 1.0))  # type: ignore[index]

@@ -118,3 +118,86 @@ finding.
 
 **Prediction.** malecns and flywire: real turn-away > 0, direction uncertain against the
 nulls. BANC: little signal (its raw turn readouts round to 0).
+
+## spread-v3 (registered 2026-10-27): robustness of spread-v2
+
+**Why.** The v2 calibration divides each brain's turn readouts by that brain's own maximum,
+so an asymmetry of about 1e-3 of saturation becomes full-scale steering. "Real > null" may
+therefore only mean "the real subgraph is lateralised and rewiring averages that out", and
+the size of about 29° is a product of normalisation. Seeds 0–9 were partly seen before the
+v2 registration. v3 tests the v2 claims under four owner-approved checks. Everything not
+named here is as in spread-v2: episode, replay baseline (Δθ, E_v(s)), the replay-exactness
+check, decoder gains, input gain, `RateBrain` defaults, calibration reference 1.0 for
+300 ms, Level A.
+
+**Variants.** real, rewired, sign_shuffled, **lat_rewired** (new, check 3), no_brain. Null
+draws for seed s use seed s, as before.
+
+**Check 1: held-out seeds.** Seeds 10–29 were never run or inspected before this
+registration. They are the confirmatory set (n = 20 per comparison). Seeds 0–9 are run
+only in condition A, below, and reported beside it, labelled exploratory.
+
+**Check 2: scale independence.**
+- (a) Shared scale. For each dataset and readout group g, one scale is used for every brain
+  (real, all null draws and seeds) in a run: `S_g(d) = max` over the real brain and all null
+  draws in that run (seeds 10–29, all three null types) of that brain's own v2 calibration
+  scale for g. So no brain's readouts are clipped at the reference stimulus, and no brain is
+  amplified relative to another. (The real brain's own scale was rejected as the shared
+  scale. Null raw rates are 10–100× the real ones, so they would clip at 1 on both sides
+  and be forced symmetric: a bias toward real.) Calibration is open-loop on the brains and
+  uses no episode outcomes. A group whose shared scale is below 1e-9 is unreachable, as in v2.
+- (b) Descriptive, every condition: per episode, the mean raw (unnormalised) turn asymmetry
+  `turn_left − turn_right` and its ratio to the real brain's raw S_turn. Reported per variant
+  and side next to the normalised results.
+
+**Check 3: laterality-preserving null (`lat_rewired`).** Edges are split into blocks by
+(pre side, post side), with side ∈ {left, right, other/unknown}. Within each block, edge
+destinations are permuted and duplicate edges and self-loops are resolved by swaps within
+the block. This is flyconn's `degree_preserving_rewire` algorithm applied per block. flyconn
+0.4 has no block option, so it is implemented in flyconn-gym and logged in
+`docs/upstream-notes.md`. It preserves each edge's source, weight, and (pre side, post side)
+relation; each neuron's out-degree into each side; and each neuron's in-degree from each
+side. If a block cannot be resolved in 1,000 rounds, it stays unshuffled and the number of
+edges affected is reported. **Pre-stated interpretation:** if real > lat_rewired, the v2
+effect is more than lateralisation. If not, the report says the v2 effect is explained by,
+or not distinguishable from, lateralisation of the subgraph.
+
+**Check 4: coverage matching.** Coverage of a subgraph = the mean, over the neurons in the
+`turn_left`, `turn_right` and `escape` readout sets, of (input synapses from subgraph
+neurons on simulated edges, i.e. weight ≥ min_weight) / (the neuron's whole-dataset input
+total, the same totals used for normalisation). The target is T = the minimum coverage over
+the three datasets at the registered k=3, min_weight=5. For each dataset, k stays 3 and
+min_weight is the value in {5, 6, 7, 8, 10, 12, 15, 20, 25, 30, 40, 50} whose coverage is
+closest to T (ties go to the smaller value). The dataset that defines T keeps min_weight 5.
+This matches downward only: no subgraph grows beyond its v2 size, so no widening. The
+chosen min_weight and achieved coverage are reported before the outcomes.
+**Pre-stated interpretation:** if malecns and flywire still turn away at BANC-level coverage
+and BANC still turns toward, the dataset disagreement is not explained by readout-input
+coverage. If malecns or flywire lose or flip their effect at matched coverage, coverage can
+explain BANC's sign.
+
+**Conditions (all seeds 10–29 unless stated).**
+- **A:** v2 per-brain scale, v2 subgraphs. Seeds 0–29; 0–9 are exploratory.
+- **B:** shared scale (2a), v2 subgraphs.
+- **C-v2:** per-brain scale, coverage-matched subgraphs.
+- **C-s:** shared scale, coverage-matched subgraphs.
+For any dataset whose matched min_weight is 5, its C conditions are the A and B runs; they
+are not run or counted twice.
+
+**Comparisons and headline.** Wiring effect: paired E_real − E_null for null ∈ {rewired,
+sign_shuffled, lat_rewired}, per dataset and condition, on seeds 10–29. m = 9 (A) + 9 (B)
++ 3 × (number of datasets whose matched min_weight ≠ 5) × 2 (C-v2, C-s). If one dataset
+keeps min_weight 5, m = 9 + 9 + 12 = 30. Headline: the Bonferroni percentile-bootstrap
+interval at level 1 − 0.05/m, with **100,000** resamples (bootstrap seed 0), because the
+tails are extreme. The 95 % CI is descriptive.
+
+**Survival rule for the v2 claims.** The v2 claims are: malecns real > rewired and
+real > sign_shuffled; flywire real > rewired and real > sign_shuffled; banc
+real < rewired. A claim **survives** only if the same verdict holds at the Bonferroni level
+in both A (held-out replication) and B (shared scale). A claim that holds in A but not B is
+reported as "normalisation-dependent". The laterality reading uses real vs lat_rewired in B
+(and A, descriptively). The coverage reading uses C-v2 and C-s.
+
+**Budget.** About 5.8 s per episode; condition A has 3 datasets × 30 seeds and B and C have
+20 seeds each, with 5 variants plus replays: about 7.5 CPU-hours, run as at most 4 parallel
+single-threaded processes on the shared laptop.

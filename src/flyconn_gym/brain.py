@@ -27,6 +27,17 @@ class BrainVariant(StrEnum):
     REWIRED = "rewired"  # flyconn degree_preserving_rewire
     SIGN_SHUFFLED = "sign_shuffled"  # flyconn shuffle_signs
     NO_BRAIN = "no_brain"  # constant (tonic) descending drive, no connectome
+    LAT_REWIRED = "lat_rewired"  # flyconn_gym.nulls.lateral_rewire (spread-v3)
+
+
+# The variant sets of the registered designs (docs/metrics.md); older designs keep theirs.
+V2_VARIANTS = (
+    BrainVariant.REAL,
+    BrainVariant.REWIRED,
+    BrainVariant.SIGN_SHUFFLED,
+    BrainVariant.NO_BRAIN,
+)
+V3_VARIANTS = (*V2_VARIANTS[:3], BrainVariant.LAT_REWIRED, BrainVariant.NO_BRAIN)
 
 
 def variant_matrix(
@@ -40,6 +51,10 @@ def variant_matrix(
             return degree_preserving_rewire(m, seed=seed)
         case BrainVariant.SIGN_SHUFFLED:
             return shuffle_signs(m, seed=seed)
+        case BrainVariant.LAT_REWIRED:
+            from flyconn_gym.nulls import lateral_rewire
+
+            return lateral_rewire(m, seed=seed)
         case BrainVariant.NO_BRAIN:
             return None
 

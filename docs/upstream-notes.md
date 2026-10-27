@@ -37,3 +37,15 @@ over flyconn's signed `ConnectivityMatrix`.
 
 - `IOMap` (named, versioned, cited input and readout sets) → `flyconn.io`, once the M1
   real-dataset maps prove generally useful.
+
+## Laterality-preserving rewire (2026-10-27)
+
+spread-v3 needs a null wiring that keeps each edge's hemisphere relation. flyconn 0.4's
+`uncertainty.degree_preserving_rewire` permutes destinations over all edges and has no
+block option. flyconn-gym now has `nulls.lateral_rewire`: the same algorithm (permute
+destinations, then resolve duplicates and self-loops by swaps) run inside each
+(pre side, post side) block, with sides left / right / other. **Proposal:** add
+`blocks: np.ndarray | None` (a per-neuron label) to `degree_preserving_rewire`. Destinations
+would then be permuted only among edges whose (block[pre], block[post]) pair matches. The
+default `None` gives today's behaviour. Report unresolvable blocks in provenance instead of
+raising.

@@ -16,7 +16,9 @@ REAL_DATASETS = ("malecns@1.0", "banc@888", "flywire@783")
 IOMAP_DIR = Path(__file__).resolve().parents[2] / "data" / "iomaps" / "looming@1"
 
 
-def load_looming(dataset: str) -> tuple[ConnectivityMatrix, IOMap]:
+def load_looming(
+    dataset: str, min_weight: int = SUBGRAPH_MIN_WEIGHT
+) -> tuple[ConnectivityMatrix, IOMap]:
     """``"toy"`` or a real dataset ref (reads the cached flyconn store; needs FLYCONN_CACHE)."""
     if dataset == "toy":
         m = toy_connectome()
@@ -26,5 +28,5 @@ def load_looming(dataset: str) -> tuple[ConnectivityMatrix, IOMap]:
     from flyconn_gym.subgraph import load_subgraph
 
     io = IOMap.load(IOMAP_DIR / f"{dataset}.json")
-    m = load_subgraph(Store.open(dataset), io, k=SUBGRAPH_K, min_weight=SUBGRAPH_MIN_WEIGHT)
+    m = load_subgraph(Store.open(dataset), io, k=SUBGRAPH_K, min_weight=min_weight)
     return m, io
